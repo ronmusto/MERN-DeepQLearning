@@ -1,16 +1,20 @@
 const express = require('express');
+const cors = require('cors');
 const { MongoClient } = require('mongodb');
 
 const app = express();
-const port = 3000;
-const mongoURI = 'mongodb://localhost:27017/mydatabase'; // Update with your MongoDB connection string
+const port = 4200;
+const mongoURI = 'mongodb://localhost:27017/MERN-DeepQLearning';
+
+app.use(cors());  // Enable CORS for all routes
+app.use(express.json());
 
 // Connect to MongoDB
 MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(client => {
-    const db = client.db(); // Get the database instance
+    const db = client.db();
 
-    // Define your API routes here
+    // Define API routes here
     app.get('/users', (req, res) => {
       db.collection('users')
         .find()
@@ -19,6 +23,46 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
         .catch(err => {
           console.error('Error retrieving users:', err);
           res.status(500).json({ error: 'Failed to retrieve users' });
+        });
+    });
+
+    app.post('/register', (req, res) => {
+      const newUser = { 
+        email: req.body.email, 
+        password: req.body.password 
+      };
+      console.log('New user:', newUser);
+      db.collection('users')
+        .insertOne(newUser)
+        .then(result => {
+          console.log('Insert result:', result); 
+          // Fetch the document that was just inserted
+          return db.collection('users').findOne({ _id: result.insertedId });
+        })
+        .then(user => {
+          // Send the user document back in the response
+          res.json({ user });
+        })
+        .catch(err => {
+          console.error('Error registering user:', err);
+          res.status(500).json({ error: 'Failed to register user', message: err.message });
+        });
+    });
+
+    app.post('/login', (req, res) => {
+      const { email, password } = req.body;
+      db.collection('users')
+        .findOne({ email, password })
+        .then(user => {
+          if (user) {
+            res.json({ user });
+          } else {
+            res.status(401).json({ error: 'Invalid login credentials' });
+          }
+        })
+        .catch(err => {
+          console.error('Error logging in:', err);
+          res.status(500).json({ error: 'Failed to login' });
         });
     });
 
