@@ -1,12 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
+let fetch;
+import('node-fetch').then(nodeFetch => {
+  fetch = nodeFetch;
+});
 
 const app = express();
 const port = 4200;
 const mongoURI = 'mongodb://localhost:27017/MERN-DeepQLearning';
 
-app.use(cors());  // Enable CORS for all routes
+app.use(cors({
+  origin: 'http://localhost:3000',  // specify the origin, replace with your frontend app's origin
+  credentials: true  // allow credentials
+}));
+
 app.use(express.json());
 
 // Connect to MongoDB
@@ -64,6 +72,23 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           console.error('Error logging in:', err);
           res.status(500).json({ error: 'Failed to login' });
         });
+    });
+
+    app.post('/predict', async (req, res) => {
+      const { input } = req.body;
+
+      // Forward the request to the Flask server
+      const response = await fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ input })
+      });
+
+      // Send the response from the Flask server back to the client
+      const data = await response.json();
+      res.json(data);
     });
 
     // Start the server
