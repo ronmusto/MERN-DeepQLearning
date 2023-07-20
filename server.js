@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 let fetch;
 import('node-fetch').then(nodeFetch => {
   fetch = nodeFetch;
@@ -13,8 +13,8 @@ const mongoURI = 'mongodb://localhost:27017/MERN-DeepQLearning';
 const secret = 'secret-key';
 
 app.use(cors({
-  origin: 'http://localhost:3000',  // specify the origin, replace with your frontend app's origin
-  credentials: true  // allow credentials
+  origin: 'http://localhost:3000',
+  credentials: true
 }));
 
 app.use(express.json());
@@ -27,27 +27,33 @@ app.use((req, res, next) => {
       if (err) {
         return res.status(401).json({ error: 'Invalid token' });
       }
-      db.collection('users')
-        .findOne({ _id: decoded._id })
-        .then(user => {
-          req.user = user;  // Attach user to the request object
-          next();
-        })
-        .catch(err => {
-          console.error('Error retrieving user:', err);
-          res.status(500).json({ error: 'Failed to retrieve user' });
-        });
+      // Only access db when token is present and valid
+      if (db) {
+        db.collection('users')
+          .findOne({ _id: decoded._id })
+          .then(user => {
+            req.user = user;  // Attach user to the request object
+            next();
+          })
+          .catch(err => {
+            console.error('Error retrieving user:', err);
+            res.status(500).json({ error: 'Failed to retrieve user' });
+          });
+      } else {
+        res.status(500).json({ error: 'Database not connected' });
+      }
     });
   } else {
     next();
   }
 });
 
+let db;
 
 // Connect to MongoDB
 MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(client => {
-    const db = client.db();
+    db = client.db();
 
     // Define API routes here
     app.get('/users', (req, res) => {
@@ -92,7 +98,7 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           if (user) {
             // Create a JWT and return it in the response
             const token = jwt.sign({ _id: user._id }, secret);
-            res.json({ token });
+            res.json({ user, token }); // Include the user object in the response
           } else {
             res.status(401).json({ error: 'Invalid login credentials' });
           }
@@ -102,6 +108,35 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           res.status(500).json({ error: 'Failed to login' });
         });
     });
+
+    app.post('/verify', (req, res) => {
+      const token = req.headers.authorization.split(' ')[1];
+      jwt.verify(token, secret, (err, decoded) => {
+        if (err) {
+          return res.status(401).json({ error: 'Invalid token' });
+        }
+    
+        // Convert _id string to ObjectId
+        const ObjectId = require('mongodb').ObjectId;
+        const _id = new ObjectId(decoded._id);
+        
+        db.collection('users')
+          .findOne({ _id })  // Use ObjectId in query
+          .then((user) => {
+            if (user) {
+              res.json({ user });
+            } else {
+              res.status(401).json({ error: 'User not found' });
+            }
+          })
+          .catch((err) => {
+            console.error('Error retrieving user:', err);
+            res.status(500).json({ error: 'Failed to retrieve user' });
+          });
+      });
+    });
+    
+    
 
     app.post('/predict', async (req, res) => {
       const { input } = req.body;
