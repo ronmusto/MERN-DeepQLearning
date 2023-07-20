@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
+const jwt = require('jsonwebtoken')
 let fetch;
 import('node-fetch').then(nodeFetch => {
   fetch = nodeFetch;
@@ -9,6 +10,7 @@ import('node-fetch').then(nodeFetch => {
 const app = express();
 const port = 4200;
 const mongoURI = 'mongodb://localhost:27017/MERN-DeepQLearning';
+const secret = 'secret-key';
 
 app.use(cors({
   origin: 'http://localhost:3000',  // specify the origin, replace with your frontend app's origin
@@ -16,6 +18,31 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// JWT Middleware
+app.use((req, res, next) => {
+  if (req.headers.authorization) {
+    const token = req.headers.authorization.split(' ')[1];
+    jwt.verify(token, secret, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+      db.collection('users')
+        .findOne({ _id: decoded._id })
+        .then(user => {
+          req.user = user;  // Attach user to the request object
+          next();
+        })
+        .catch(err => {
+          console.error('Error retrieving user:', err);
+          res.status(500).json({ error: 'Failed to retrieve user' });
+        });
+    });
+  } else {
+    next();
+  }
+});
+
 
 // Connect to MongoDB
 MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -63,7 +90,9 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
         .findOne({ email, password })
         .then(user => {
           if (user) {
-            res.json({ user });
+            // Create a JWT and return it in the response
+            const token = jwt.sign({ _id: user._id }, secret);
+            res.json({ token });
           } else {
             res.status(401).json({ error: 'Invalid login credentials' });
           }
