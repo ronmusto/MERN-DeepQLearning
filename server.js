@@ -148,8 +148,6 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           });
       });
     });
-    
-    
 
     app.post('/predict', async (req, res) => {
       const { input } = req.body;
