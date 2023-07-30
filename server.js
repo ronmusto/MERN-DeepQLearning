@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const cookieParser = require('cookie-parser');
+const { ObjectId } = require('mongodb');
 
 let fetch;
 import('node-fetch').then(nodeFetch => {
@@ -74,6 +75,40 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           res.status(500).json({ error: 'Failed to retrieve users' });
         });
     });
+
+    app.get('/retail-data-2009-2010', (req, res) => {
+      const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
+      const skip = parseInt(req.query.skip) || 0;
+    
+      db.collection('retail-data-2009-2010')
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .toArray()
+        .then(data => res.json(data))
+        .catch(err => {
+          console.error('Error retrieving retail data:', err);
+          res.status(500).json({ error: 'Failed to retrieve retail data' });
+        });
+    });
+    
+    
+    app.get('/retail-data-2010-2011', (req, res) => {
+      const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
+      const skip = parseInt(req.query.skip) || 0;
+    
+      db.collection('retail-data-2010-2011')
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .toArray()
+        .then(data => res.json(data))
+        .catch(err => {
+          console.error('Error retrieving retail data:', err);
+          res.status(500).json({ error: 'Failed to retrieve retail data' });
+        });
+    });
+    
     
     app.post('/register', (req, res) => {
       const { email, password } = req.body;
