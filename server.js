@@ -91,7 +91,48 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           res.status(500).json({ error: 'Failed to retrieve retail data' });
         });
     });
-    
+
+    app.get('/retail-data-2010-2011-aggregated', (req, res) => {
+      db.collection('retail-data-2010-2011')
+        .aggregate([
+          {
+            $group: {
+              _id: "$InvoiceDate",
+              totalQuantity: { $sum: "$Quantity" }
+            }
+          },
+          {
+            $sort: { "_id": 1 }  // sort by date in ascending order
+          }
+        ])
+        .toArray()
+        .then(data => res.json(data))
+        .catch(err => {
+          console.error('Error retrieving aggregated retail data:', err);
+          res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
+        });
+    });    
+
+    app.get('/retail-data-2009-2010-aggregated', (req, res) => {
+      db.collection('retail-data-2009-2010')
+        .aggregate([
+          {
+            $group: {
+              _id: "$InvoiceDate",
+              totalQuantity: { $sum: "$Quantity" }
+            }
+          },
+          {
+            $sort: { "_id": 1 }  // sort by date in ascending order
+          }
+        ])
+        .toArray()
+        .then(data => res.json(data))
+        .catch(err => {
+          console.error('Error retrieving aggregated retail data:', err);
+          res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
+        });
+    });
     
     app.get('/retail-data-2010-2011', (req, res) => {
       const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
