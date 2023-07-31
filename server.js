@@ -97,6 +97,11 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
       db.collection('retail-data-2009-2010')
         .aggregate([
           {
+            $match: {
+              Quantity: { $gte: 0 }  // Filter out cancelled orders
+            }
+          },
+          {
             $group: {
               _id: "$InvoiceDate",
               totalQuantity: { $sum: "$Quantity" }
@@ -120,6 +125,11 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
       db.collection('retail-data-2010-2011')
         .aggregate([
           {
+            $match: {
+              Quantity: { $gte: 0 }  // Filter out cancelled orders
+            }
+          },
+          {
             $group: {
               _id: "$InvoiceDate",
               totalQuantity: { $sum: "$Quantity" }
@@ -137,8 +147,7 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
         });
     });
-    
-    
+
     app.get('/retail-data-2010-2011', (req, res) => {
       const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
       const skip = parseInt(req.query.skip) || 0;
