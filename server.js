@@ -215,8 +215,35 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
     });
 
     // Aggregate data by country for retail-data-2010-2011
+    app.get('/aggregate-by-country-2009-2010', (req, res) => {
+      db.collection('retail-data-2009-2010')
+          .aggregate([
+              {
+                  $group: {
+                      _id: "$Country",  // Group by Country field
+                      totalSales: {
+                          $sum: {
+                              $multiply: ["$Price", "$Quantity"]  // Calculate sales for each item
+                          }
+                      },
+                      totalQuantity: { $sum: "$Quantity" }
+                  }
+              },
+              {
+                  $sort: { totalSales: -1 }  // sort in descending order
+              }
+          ])
+          .toArray()
+          .then(data => res.json(data))
+          .catch(err => {
+              console.error('Error retrieving aggregated data by country:', err);
+              res.status(500).send('Internal Server Error');
+          });
+    });
+
+    // Aggregate data by country for retail-data-2010-2011
     app.get('/aggregate-by-country-2010-2011', (req, res) => {
-      db.collection('retail-data-2010-2011')  // replace with your actual collection name
+      db.collection('retail-data-2010-2011')
           .aggregate([
               {
                   $group: {
