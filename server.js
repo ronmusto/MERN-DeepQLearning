@@ -144,6 +144,44 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           });
     });
 
+    // Heatmap Data Endpoint
+    app.get('/heatmap-data', (req, res) => {
+      db.collection('retail-data-2010-2011')
+        .aggregate([
+            {
+                $group: {
+                    _id: "$Country",  // Group by Country field
+                    totalSales: {
+                        $sum: {
+                            $multiply: ["$Price", "$Quantity"]  // Calculate sales for each item
+                        }
+                    },
+                    totalQuantity: { $sum: "$Quantity" }
+                }
+            },
+            {
+                $sort: { totalSales: -1 }  // sort in descending order
+            }
+        ])
+        .toArray()
+        .then(data => {
+          // Grouping the top 5 countries into a "Top 5" group
+          const top5Countries = data.slice(0, 5);
+          const otherCountries = data.slice(5);
+          const top5Group = {
+            _id: "Top 5",
+            totalSales: top5Countries.reduce((sum, country) => sum + country.totalSales, 0),
+            totalQuantity: top5Countries.reduce((sum, country) => sum + country.totalQuantity, 0),
+          };
+          const groupedData = [top5Group, ...otherCountries];
+          res.json(groupedData);
+        })
+        .catch(err => {
+            console.error('Error retrieving aggregated data by country:', err);
+            res.status(500).send('Internal Server Error');
+        });
+    });
+
     // Endpoint for aggregated data based on timeframe 2010-2011
     app.get('/retail-data-2010-2011-aggregated-timeframe', (req, res) => {
       const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
