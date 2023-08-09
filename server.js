@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const cookieParser = require('cookie-parser');
-const { ObjectId } = require('mongodb');
 
 let fetch;
 import('node-fetch').then(nodeFetch => {
@@ -22,7 +21,6 @@ app.use(cors({
   methods: ['GET', 'POST'],  // add other HTTP methods if needed
   credentials: true  // this enables cookies to be sent with requests
 }));
-
 
 app.use(cookieParser());
 
@@ -76,95 +74,248 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
         });
     });
 
-    app.get('/retail-data-2009-2010', (req, res) => {
+    // Endpoint for aggregated data based on timeframe 2009-2010
+    app.get('/retail-data-2009-2010-aggregated-timeframe', (req, res) => {
       const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
-      const skip = parseInt(req.query.skip) || 0;
-    
+      const timeFrame = req.query.timeFrame || 'day'; // default timeframe to day
+
+      let groupByExpression;
+      switch (timeFrame) {
+          case 'hour':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" },
+                  day: { $dayOfMonth: "$InvoiceDate" },
+                  hour: { $hour: "$InvoiceDate" }
+              };
+              break;
+          case 'day':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" },
+                  day: { $dayOfMonth: "$InvoiceDate" }
+              };
+              break;
+          case 'week':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  week: { $week: "$InvoiceDate" }
+              };
+              break;
+          case 'month':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" }
+              };
+              break;
+          default:
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" },
+                  day: { $dayOfMonth: "$InvoiceDate" }
+              };
+              break;
+      }
+      //collection to grab aggregated data from 2009-2010
       db.collection('retail-data-2009-2010')
-        .find()
-        .skip(skip)
-        .limit(limit)
+          .aggregate([
+              {
+                  $match: {
+                      Quantity: { $gte: 0 }  // Filter out cancelled orders
+                  }
+              },
+              {
+                  $group: {
+                      _id: groupByExpression,
+                      totalQuantity: { $sum: "$Quantity" },
+                      totalSales: { $sum: { $multiply: ["$Quantity", "$Price"] } }
+                  }
+              },
+              {
+                  $sort: { "_id": 1 }  // sort by date in ascending order
+              }
+          ])
+          .limit(limit)
+          .toArray()
+          .then(data => res.json(data))
+          .catch(err => {
+              console.error('Error retrieving aggregated retail data:', err);
+              res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
+          });
+    });
+
+    // Heatmap Data Endpoint
+    app.get('/heatmap-data', (req, res) => {
+      db.collection('retail-data-2010-2011')
+        .aggregate([
+            {
+                $group: {
+                    _id: "$Country",  // Group by Country field
+                    totalSales: {
+                        $sum: {
+                            $multiply: ["$Price", "$Quantity"]  // Calculate sales for each item
+                        }
+                    },
+                    totalQuantity: { $sum: "$Quantity" }
+                }
+            },
+            {
+                $sort: { totalSales: -1 }  // sort in descending order
+            }
+        ])
         .toArray()
-        .then(data => res.json(data))
+        .then(data => {
+            // Exclude the top country because the UK has so many sales it ruins the heatmap
+            const filteredData = data.slice(6).filter(country => country.totalSales >= 10000);
+    
+            res.json(filteredData);
+        })
         .catch(err => {
-          console.error('Error retrieving retail data:', err);
-          res.status(500).json({ error: 'Failed to retrieve retail data' });
+            console.error('Error retrieving aggregated data by country:', err);
+            res.status(500).send('Internal Server Error');
         });
     });
 
-    app.get('/retail-data-2009-2010-aggregated', (req, res) => {
+    // Endpoint for aggregated data based on timeframe 2010-2011
+    app.get('/retail-data-2010-2011-aggregated-timeframe', (req, res) => {
       const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
-      db.collection('retail-data-2009-2010')
-        .aggregate([
-          {
-            $match: {
-              Quantity: { $gte: 0 }  // Filter out cancelled orders
-            }
-          },
-          {
-            $group: {
-              _id: "$InvoiceDate",
-              totalQuantity: { $sum: "$Quantity" }
-            }
-          },
-          {
-            $sort: { "_id": 1 }  // sort by date in ascending order
-          }
-        ])
-        .limit(limit)
-        .toArray()
-        .then(data => res.json(data))
-        .catch(err => {
-          console.error('Error retrieving aggregated retail data:', err);
-          res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
-        });
-    });
-    
-    app.get('/retail-data-2010-2011-aggregated', (req, res) => {
-      const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
+      const timeFrame = req.query.timeFrame || 'day'; // default timeframe to day
+
+      let groupByExpression;
+      switch (timeFrame) {
+          case 'hour':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" },
+                  day: { $dayOfMonth: "$InvoiceDate" },
+                  hour: { $hour: "$InvoiceDate" }
+              };
+              break;
+          case 'day':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" },
+                  day: { $dayOfMonth: "$InvoiceDate" }
+              };
+              break;
+          case 'week':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  week: { $week: "$InvoiceDate" }
+              };
+              break;
+          case 'month':
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" }
+              };
+              break;
+          default:
+              groupByExpression = {
+                  year: { $year: "$InvoiceDate" },
+                  month: { $month: "$InvoiceDate" },
+                  day: { $dayOfMonth: "$InvoiceDate" }
+              };
+              break;
+      }
+      //collection to grab aggregated data from 2010-2011
       db.collection('retail-data-2010-2011')
-        .aggregate([
-          {
-            $match: {
-              Quantity: { $gte: 0 }  // Filter out cancelled orders
-            }
-          },
-          {
-            $group: {
-              _id: "$InvoiceDate",
-              totalQuantity: { $sum: "$Quantity" }
-            }
-          },
-          {
-            $sort: { "_id": 1 }  // sort by date in ascending order
-          }
-        ])
-        .limit(limit)
-        .toArray()
-        .then(data => res.json(data))
-        .catch(err => {
-          console.error('Error retrieving aggregated retail data:', err);
-          res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
-        });
+          .aggregate([
+              {
+                  $match: {
+                      Quantity: { $gte: 0 }  // Filter out cancelled orders
+                  }
+              },
+              {
+                  $group: {
+                      _id: groupByExpression,
+                      totalQuantity: { $sum: "$Quantity" },
+                      totalSales: { $sum: { $multiply: ["$Quantity", "$Price"] } }
+                  }
+              },
+              {
+                  $sort: { "_id": 1 }  // sort by date in ascending order
+              }
+          ])
+          .limit(limit)
+          .toArray()
+          .then(data => {res.json(data);})
+          .catch(err => {
+              console.error('Error retrieving aggregated retail data:', err);
+              res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
+          });
     });
 
-    app.get('/retail-data-2010-2011', (req, res) => {
-      const limit = parseInt(req.query.limit) || 100; // default limit to 100 documents
-      const skip = parseInt(req.query.skip) || 0;
+    // Aggregate data by country for retail-data-2010-2011
+    app.get('/aggregate-by-country-2009-2010', (req, res) => {
+      db.collection('retail-data-2009-2010')
+          .aggregate([
+              {
+                $match: {
+                    Quantity: { $gte: 0 }  // Filter out cancelled orders
+                }
+              },
+              {
+                  $group: {
+                      _id: "$Country",  // Group by Country field
+                      totalSales: {
+                          $sum: {
+                              $multiply: ["$Price", "$Quantity"]  // Calculate sales for each item
+                          }
+                      },
+                      totalQuantity: { $sum: "$Quantity" }
+                  }
+              },
+              {
+                  $sort: { totalSales: -1 }  // sort in descending order
+              }
+          ])
+          .toArray()
+          .then(data => {
+            // Exclude the top country because the UK has so many sales
+            const removeUK = data.slice(1);
     
+            res.json(removeUK);
+        })
+          .catch(err => {
+              console.error('Error retrieving aggregated data by country:', err);
+              res.status(500).send('Internal Server Error');
+          });
+    });
+
+    // Aggregate data by country for retail-data-2010-2011
+    app.get('/aggregate-by-country-2010-2011', (req, res) => {
       db.collection('retail-data-2010-2011')
-        .find()
-        .skip(skip)
-        .limit(limit)
-        .toArray()
-        .then(data => res.json(data))
-        .catch(err => {
-          console.error('Error retrieving retail data:', err);
-          res.status(500).json({ error: 'Failed to retrieve retail data' });
-        });
+          .aggregate([
+              {
+                  $group: {
+                      _id: "$Country",  // Group by Country field
+                      totalSales: {
+                          $sum: {
+                              $multiply: ["$Price", "$Quantity"]  // Calculate sales for each item
+                          }
+                      },
+                      totalQuantity: { $sum: "$Quantity" }
+                  }
+              },
+              {
+                  $sort: { totalSales: -1 }  // sort in descending order
+              }
+          ])
+          .toArray()
+          .then(data => {
+            // Exclude the top country because the UK has so many sales
+            const removeUK = data.slice(1);
+    
+            res.json(removeUK);
+        })
+          .catch(err => {
+              console.error('Error retrieving aggregated data by country:', err);
+              res.status(500).send('Internal Server Error');
+          });
     });
     
-    
+    //Endpoints for login and registration
     app.post('/register', (req, res) => {
       const { email, password } = req.body;
       bcrypt.hash(password, saltRounds, function(err, hash) {
@@ -239,6 +390,7 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
       });
     });
 
+    //Sends request to flask server to have AI make prediction
     app.post('/predict', async (req, res) => {
       const { input } = req.body;
 
@@ -260,7 +412,7 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
       console.log('Connected to MongoDB');
-    });
+      });
   })
   .catch(err => {
     console.error('Error connecting to MongoDB:', err);
