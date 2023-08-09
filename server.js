@@ -239,7 +239,7 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
           ])
           .limit(limit)
           .toArray()
-          .then(data => res.json(data))
+          .then(data => {res.json(data);})
           .catch(err => {
               console.error('Error retrieving aggregated retail data:', err);
               res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
@@ -250,6 +250,11 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
     app.get('/aggregate-by-country-2009-2010', (req, res) => {
       db.collection('retail-data-2009-2010')
           .aggregate([
+              {
+                $match: {
+                    Quantity: { $gte: 0 }  // Filter out cancelled orders
+                }
+              },
               {
                   $group: {
                       _id: "$Country",  // Group by Country field
@@ -266,7 +271,12 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
               }
           ])
           .toArray()
-          .then(data => res.json(data))
+          .then(data => {
+            // Exclude the top country because the UK has so many sales
+            const removeUK = data.slice(1);
+    
+            res.json(removeUK);
+        })
           .catch(err => {
               console.error('Error retrieving aggregated data by country:', err);
               res.status(500).send('Internal Server Error');
@@ -293,7 +303,12 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
               }
           ])
           .toArray()
-          .then(data => res.json(data))
+          .then(data => {
+            // Exclude the top country because the UK has so many sales
+            const removeUK = data.slice(1);
+    
+            res.json(removeUK);
+        })
           .catch(err => {
               console.error('Error retrieving aggregated data by country:', err);
               res.status(500).send('Internal Server Error');
