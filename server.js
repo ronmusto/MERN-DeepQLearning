@@ -165,16 +165,10 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
         ])
         .toArray()
         .then(data => {
-          // Grouping the top 5 countries into a "Top 5" group
-          const top5Countries = data.slice(0, 5);
-          const otherCountries = data.slice(5);
-          const top5Group = {
-            _id: "Top 5",
-            totalSales: top5Countries.reduce((sum, country) => sum + country.totalSales, 0),
-            totalQuantity: top5Countries.reduce((sum, country) => sum + country.totalQuantity, 0),
-          };
-          const groupedData = [top5Group, ...otherCountries];
-          res.json(groupedData);
+            // Exclude the top country because the UK has so many sales it ruins the heatmap
+            const filteredData = data.slice(6).filter(country => country.totalSales >= 10000);
+    
+            res.json(filteredData);
         })
         .catch(err => {
             console.error('Error retrieving aggregated data by country:', err);
