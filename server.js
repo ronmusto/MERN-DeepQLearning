@@ -62,6 +62,15 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
   .then(client => {
     db = client.db();
 
+    db.collection('retail-data-2009-2010')
+    .deleteMany({ Description: null })
+    .then(result => {
+      console.log(`Deleted ${result.deletedCount} documents with null description`);
+    })
+    .catch(err => {
+      console.error('Error deleting documents with null description:', err);
+    });
+
     // Define API routes here
     app.get('/users', (req, res) => {
       db.collection('users')
@@ -142,6 +151,54 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
               console.error('Error retrieving aggregated retail data:', err);
               res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
           });
+    });
+
+    // Endpoint to get unique products
+    app.get('/unique-products', (req, res) => {
+      db.collection('retail-data-2009-2010')
+        .aggregate([
+          {
+            $group: {
+              _id: "$StockCode", // Group by StockCode to get unique products
+              Description: { $first: "$Description" }, // Get the first Description for each StockCode
+              Price: { $first: "$Price" } // Get the first Price for each StockCode
+            }
+          },
+          {
+            $project: {
+              StockCode: "$_id",
+              Description: 1,
+              Price: 1
+            }
+          }
+        ])
+        .toArray()
+        .then(products => {
+          res.json(products);
+        })
+        .catch(err => {
+          console.error('Error retrieving unique products:', err);
+          res.status(500).json({ error: 'Failed to retrieve unique products' });
+        });
+    });
+
+    // Endpoint to get details of a specific product
+    app.get('/product-detail/:productId', (req, res) => {
+      const productId = parseInt(req.params.productId); // Convert the productId to a number
+
+      db.collection('retail-data-2009-2010')
+        .findOne({ StockCode: productId })
+        .then(product => {
+          if (product) {
+            res.json(product);
+          } else {
+            res.status(404).json({ error: 'Product not found' });
+          }
+        })
+        .catch(err => {
+          console.error('Error retrieving product details:', err);
+          res.status(500).json({ error: 'Failed to retrieve product details' });
+        });
     });
 
     // Heatmap Data Endpoint
