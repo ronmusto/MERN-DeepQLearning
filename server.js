@@ -62,15 +62,6 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
   .then(client => {
     db = client.db();
 
-    db.collection('retail-data-2009-2010')
-    .deleteMany({ Description: null })
-    .then(result => {
-      console.log(`Deleted ${result.deletedCount} documents with null description`);
-    })
-    .catch(err => {
-      console.error('Error deleting documents with null description:', err);
-    });
-
     // Define API routes here
     app.get('/users', (req, res) => {
       db.collection('users')
@@ -474,4 +465,22 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
   .catch(err => {
     console.error('Error connecting to MongoDB:', err);
     process.exit(1);
+  });
+
+  // Endpoint to make stock price prediction
+  app.post('/predict-stock', async (req, res) => {
+    const { stockSymbol, predictionDays } = req.body;
+
+    // Forward the request to the Flask server (or any other server hosting your ML model)
+    const response = await fetch('http://localhost:5000/predict-stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ stockSymbol, predictionDays })
+    });
+
+    // Send the response from the Flask server back to the client
+    const data = await response.json();
+    res.json(data);
   });

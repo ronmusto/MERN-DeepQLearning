@@ -36,3 +36,12 @@ db.collection('retail-data-2010-2011')
     });
 })
 .catch(err => console.error('Error finding documents with NaN StockCode:', err));
+
+db.collection('retail-data-2009-2010')
+.deleteMany({ Description: null })
+.then(result => {
+  console.log(`Deleted ${result.deletedCount} documents with null description`);
+})
+.catch(err => {
+  console.error('Error deleting documents with null description:', err);
+});
