@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const cookieParser = require('cookie-parser');
+const { ObjectId } = require('mongodb');
 
 let fetch;
 import('node-fetch').then(nodeFetch => {
@@ -71,6 +72,34 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
         .catch(err => {
           console.error('Error retrieving users:', err);
           res.status(500).json({ error: 'Failed to retrieve users' });
+        });
+    });
+
+    // Get all vacations
+    app.get('/vacations', (req, res) => {
+      db.collection('Vacations')
+        .find()
+        .toArray()
+        .then(vacations => res.json(vacations))
+        .catch(err => {
+          console.error('Error retrieving vacations:', err);
+          res.status(500).json({ error: 'Failed to retrieve vacations' });
+        });
+    });
+
+    app.get('/vacation/:id', (req, res) => {
+      const vacationId = new ObjectId(req.params.id); // Convert string ID to ObjectId
+      db.collection('Vacations')
+        .findOne({ _id: vacationId })
+        .then(vacation => {
+          if (!vacation) {
+            return res.status(404).json({ error: 'Vacation not found' });
+          }
+          res.json(vacation);
+        })
+        .catch(err => {
+          console.error('Error retrieving vacation:', err);
+          res.status(500).json({ error: 'Failed to retrieve vacation' });
         });
     });
 
@@ -142,54 +171,6 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
               console.error('Error retrieving aggregated retail data:', err);
               res.status(500).json({ error: 'Failed to retrieve aggregated retail data' });
           });
-    });
-
-    // Endpoint to get unique products
-    app.get('/unique-products', (req, res) => {
-      db.collection('retail-data-2009-2010')
-        .aggregate([
-          {
-            $group: {
-              _id: "$StockCode", // Group by StockCode to get unique products
-              Description: { $first: "$Description" }, // Get the first Description for each StockCode
-              Price: { $first: "$Price" } // Get the first Price for each StockCode
-            }
-          },
-          {
-            $project: {
-              StockCode: "$_id",
-              Description: 1,
-              Price: 1
-            }
-          }
-        ])
-        .toArray()
-        .then(products => {
-          res.json(products);
-        })
-        .catch(err => {
-          console.error('Error retrieving unique products:', err);
-          res.status(500).json({ error: 'Failed to retrieve unique products' });
-        });
-    });
-
-    // Endpoint to get details of a specific product
-    app.get('/product-detail/:productId', (req, res) => {
-      const productId = parseInt(req.params.productId); // Convert the productId to a number
-
-      db.collection('retail-data-2009-2010')
-        .findOne({ StockCode: productId })
-        .then(product => {
-          if (product) {
-            res.json(product);
-          } else {
-            res.status(404).json({ error: 'Product not found' });
-          }
-        })
-        .catch(err => {
-          console.error('Error retrieving product details:', err);
-          res.status(500).json({ error: 'Failed to retrieve product details' });
-        });
     });
 
     // Heatmap Data Endpoint
@@ -465,22 +446,4 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
   .catch(err => {
     console.error('Error connecting to MongoDB:', err);
     process.exit(1);
-  });
-
-  // Endpoint to make stock price prediction
-  app.post('/predict-stock', async (req, res) => {
-    const { stockSymbol, predictionDays } = req.body;
-
-    // Forward the request to the Flask server (or any other server hosting your ML model)
-    const response = await fetch('http://localhost:5000/predict-stock', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ stockSymbol, predictionDays })
-    });
-
-    // Send the response from the Flask server back to the client
-    const data = await response.json();
-    res.json(data);
   });
