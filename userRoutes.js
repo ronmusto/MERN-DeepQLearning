@@ -28,7 +28,7 @@ module.exports = function(app, db) {
     const userId = req.params.userId;
 
     db.collection('User-Bookings')
-        .find({ userId: ObjectId(userId) })
+        .find({ userId: new ObjectId(userId) })
         .toArray()
         .then(bookings => {
             const vacationIds = bookings.map(booking => ObjectId(booking.vacationId));
