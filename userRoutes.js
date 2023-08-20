@@ -3,11 +3,11 @@ const { ObjectId } = require('mongodb');
 module.exports = function(app, db) {
 
     //gets specific user by _id
-    app.get('/user-data/:userId', (req, res) => {
-        const userId = req.params.userId;
+    app.get('/user-data/:userID', (req, res) => {
+        const userID = req.params.userID;
 
         db.collection('users')
-            .findOne({ _id: new ObjectId(userId) })
+            .findOne({ _id: new ObjectId(userID) })
             .then(user => {
                 if (!user) {
                     return res.status(404).json({ error: 'User not found' });
@@ -23,25 +23,19 @@ module.exports = function(app, db) {
             });
         });
 
-    //get user specific bookings
-    app.get('/user-booked-vacations/:userId', (req, res) => {
-    const userId = req.params.userId;
+    // Get user specific bookings
+    app.get('/user-booked-vacations/:userID', (req, res) => {
+        const userID = req.params.userID;
 
-    db.collection('User-Bookings')
-        .find({ userId: new ObjectId(userId) })
-        .toArray()
-        .then(bookings => {
-            const vacationIds = bookings.map(booking => ObjectId(booking.vacationId));
-            return db.collection('User-Bookings')
-                .find({ _id: { $in: vacationIds } })
-                .toArray();
-        })
-        .then(vacations => {
-            res.json(vacations);
-        })
-        .catch(err => {
-            console.error('Error retrieving booked vacations:', err);
-            res.status(500).json({ error: 'Failed to retrieve booked vacations' });
+        db.collection('User-Bookings')
+            .find({ userID })
+            .toArray()
+            .then(bookings => {
+                res.json(bookings);
+            })
+            .catch(err => {
+                console.error('Error retrieving booked vacations:', err);
+                res.status(500).json({ error: 'Failed to retrieve booked vacations' });
+            });
         });
-    });
 };

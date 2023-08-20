@@ -17,14 +17,15 @@ module.exports = function(app, db) {
     // Send booked vacation to database
     app.post('/bookVacation', (req, res) => {
       // Extract booking details, including userId, from the request body
-      const { userId, vacationDetails, userBookingDetails } = req.body;
+      console.log(req.body)
+      const { userID, vacationDetails, userBookingDetails } = req.body;
 
       // Combine the userId, vacation, and booking details
       const combinedBooking = {
-          userId, // This is the added line to include userId
+          userID,
           ...vacationDetails,
           userDetails: userBookingDetails,
-          bookingDate: new Date() // You can store the booking date if needed
+          bookingDate: new Date()
       };
 
       // Insert the combined booking into the User-Bookings collection
