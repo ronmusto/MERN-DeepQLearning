@@ -23,7 +23,7 @@ module.exports = function(app, db) {
       // Combine the userId, vacation, and booking details
       const combinedBooking = {
           userID,
-          ...vacationDetails,
+          vacationDetails: { ...vacationDetails, _id: undefined },
           userDetails: userBookingDetails,
           bookingDate: new Date()
       };
