@@ -26,6 +26,9 @@ app.use(cookieParser());
 
 app.use(express.json());
 
+// Serve static files from the "images" directory
+app.use('/images', express.static('images'));
+
 // JWT Middleware
 app.use((req, res, next) => {
   if (req.headers.authorization) {
