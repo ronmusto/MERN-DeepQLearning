@@ -3,7 +3,7 @@ const cors = require('cors');
 const { MongoClient } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
+const saltRounds = 12;
 const cookieParser = require('cookie-parser');
 
 let fetch;
@@ -82,8 +82,7 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
         console.log('New user:', newUser);
         db.collection('users')
           .insertOne(newUser)
-          .then(result => {
-            console.log('Insert result:', result); 
+          .then(result => { 
             return db.collection('users').findOne({ _id: result.insertedId });
           })
           .then(user => {
@@ -135,7 +134,6 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
         db.collection('users')
           .findOne({ _id })
           .then((user) => {
-            console.log('User:', user);  // log the user
             if (user) {
               res.json({ user });
             } else {

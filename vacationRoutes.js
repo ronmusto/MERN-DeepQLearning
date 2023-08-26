@@ -17,7 +17,6 @@ module.exports = function(app, db) {
     // Send booked vacation to database
     app.post('/bookVacation', (req, res) => {
       // Extract booking details, including userId, from the request body
-      console.log(req.body)
       const { userID, vacationDetails, userBookingDetails, startDate, endDate } = req.body;
 
       // Combine the userId, vacation, and booking details

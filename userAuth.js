@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
+const saltRounds = 12;
 
 module.exports = function(app, db) {
 
@@ -8,11 +8,9 @@ module.exports = function(app, db) {
         const { email, username, password } = req.body;
         bcrypt.hash(password, saltRounds, function(err, hash) {
             const newUser = { email, username, password: hash };
-            console.log('New user:', newUser);
             db.collection('users')
             .insertOne(newUser)
             .then(result => {
-                console.log('Insert result:', result); 
                 return db.collection('users').findOne({ _id: result.insertedId });
             })
             .then(user => {
@@ -53,7 +51,6 @@ module.exports = function(app, db) {
         
         app.get('/verify', (req, res) => {
         const token = req.cookies.token;  // read the token from the cookie
-        console.log('Token:', token);  // log the token
         jwt.verify(token, secret, (err, decoded) => {
             if (err) {
             console.error('Token verification error:', err);
@@ -64,7 +61,6 @@ module.exports = function(app, db) {
             db.collection('users')
             .findOne({ _id })
             .then((user) => {
-                console.log('User:', user);  // log the user
                 if (user) {
                 res.json({ user });
                 } else {
