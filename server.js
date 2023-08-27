@@ -18,7 +18,7 @@ const secret = 'secret-key';
 
 app.use(cors({
   origin: 'http://localhost:3000',  // replace with the origin of your client
-  methods: ['GET', 'POST'],  // add other HTTP methods if needed
+  methods: ['GET', 'POST', 'DELETE', 'PUT'],  // add other HTTP methods if needed
   credentials: true  // this enables cookies to be sent with requests
 }));
 
