@@ -175,3 +175,5 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
     console.error('Error connecting to MongoDB:', err);
     process.exit(1);
   });
+
+  module.exports = app;
