@@ -13,7 +13,7 @@ import('node-fetch').then(nodeFetch => {
 
 const app = express();
 const port = 4200;
-const mongoURI = 'mongodb://localhost:27017/MERN-DeepQLearning';
+const mongoURI = 'mongodb+srv://ronmusto:zbmgvQ6TUgiCrlk4@cluster0.i1tiquq.mongodb.net/MERN-Full-Stack-Data';
 const secret = 'secret-key';
 
 app.use(cors({
