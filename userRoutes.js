@@ -12,10 +12,10 @@ module.exports = function(app, db) {
                 if (!user) {
                     return res.status(404).json({ error: 'User not found' });
                 }
-                res.json({
+                /*res.json({
                     username: user.username,
                     email: user.email
-                });
+                });*/
             })
             .catch(err => {
                 console.error('Error retrieving user data:', err);
