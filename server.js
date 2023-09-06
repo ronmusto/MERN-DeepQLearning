@@ -18,6 +18,10 @@ MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true 
   .then(client => {
     db = client.db();
 
+    app.get('/health', (req, res) => {
+      res.status(200).send('OK');
+    });
+
     // Adds JWT, CORS, ect.
     setupMiddleware(app, db);
     // Import the user routes

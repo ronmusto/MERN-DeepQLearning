@@ -6,8 +6,8 @@ const { secret } = require('./config');
 
 module.exports = (app, db) => {
     app.use(cors({
-        origin: 'http://localhost:3000',  // replace with the origin of your client
-        methods: ['GET', 'POST', 'DELETE', 'PUT'],  // add other HTTP methods if needed
+        origin: 'https://www.renaldomusto.com',
+        methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
         credentials: true  // this enables cookies to be sent with requests
     }));
 
