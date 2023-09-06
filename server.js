@@ -9,7 +9,7 @@ import('node-fetch').then(nodeFetch => {
 
 const app = express();
 const port = process.env.PORT || 4200;
-const mongoURI = 'mongodb+srv://ronmusto:zbmgvQ6TUgiCrlk4@cluster0.i1tiquq.mongodb.net/MERN-Full-Stack-Data';
+const mongoURI = process.env.AtlasURI;
 
 let db;
 
