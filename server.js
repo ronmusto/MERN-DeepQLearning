@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { MongoClient } = require('mongodb');
 const setupMiddleware = require('./middleware');
 const express = require('express');
