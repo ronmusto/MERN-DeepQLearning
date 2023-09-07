@@ -1,3 +1,2 @@
-// config.js
-const secret = 'secret-key';  //move this to a more secure location later on
+const secret = process.env.JWT;
 module.exports = { secret };
