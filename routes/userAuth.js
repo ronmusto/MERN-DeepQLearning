@@ -8,6 +8,12 @@ module.exports = function(app, db) {
     //Endpoints for login and registration
     app.post('/register', (req, res) => {
         const { email, username, password } = req.body;
+
+        // Validate inputs
+        if (!email || !username || !password) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }  
+
         bcrypt.hash(password, saltRounds, function(err, hash) {
             const newUser = { email, username, password: hash };
             db.collection('users')
