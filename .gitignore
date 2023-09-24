@@ -7,5 +7,6 @@
 # Environment variables
 .env
 
+# Models & Scalers
 housemodel.joblib
 scaler.joblib
