@@ -32,7 +32,7 @@ module.exports = function(app, db) {
     });
 
     app.post('/logout', (req, res) => {
-        res.clearCookie('token', { httpOnly: true, secure: false });
+        res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'Strict' });
         res.json({ message: 'Logged out' });
     });
     
@@ -45,7 +45,7 @@ module.exports = function(app, db) {
             bcrypt.compare(password, user.password, function(err, result) {
             if(result) {
                 const token = jwt.sign({ _id: user._id }, secret);
-                res.cookie('token', token, { httpOnly: true, secure: false });  // set cookie here
+                res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });  // set cookie here
                 res.json({ user }); 
             } else {
                 res.status(401).json({ error: 'Invalid login credentials' });
