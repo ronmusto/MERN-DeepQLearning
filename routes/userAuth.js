@@ -29,56 +29,61 @@ module.exports = function(app, db) {
                 res.status(500).json({ error: 'Failed to register user', message: err.message });
             });
         });
-        });
-        
-        app.post('/login', (req, res) => {
-        const { email, password } = req.body;
-        db.collection('users')
-            .findOne({ email })
-            .then(user => {
-            if (user) {
-                bcrypt.compare(password, user.password, function(err, result) {
-                if(result) {
-                    const token = jwt.sign({ _id: user._id }, secret);
-                    res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });  // set cookie here
-                    res.json({ user }); 
-                } else {
-                    res.status(401).json({ error: 'Invalid login credentials' });
-                }
-                });
+    });
+
+    app.post('/logout', (req, res) => {
+        res.clearCookie('token', { httpOnly: true, secure: false });
+        res.json({ message: 'Logged out' });
+    });
+    
+    app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+    db.collection('users')
+        .findOne({ email })
+        .then(user => {
+        if (user) {
+            bcrypt.compare(password, user.password, function(err, result) {
+            if(result) {
+                const token = jwt.sign({ _id: user._id }, secret);
+                res.cookie('token', token, { httpOnly: true, secure: false });  // set cookie here
+                res.json({ user }); 
             } else {
                 res.status(401).json({ error: 'Invalid login credentials' });
             }
-            })
-            .catch(err => {
-            console.error('Error logging in:', err);
-            res.status(500).json({ error: 'Failed to login' });
             });
-        });
-        
-        
-        app.get('/verify', (req, res) => {
-        const token = req.cookies.token;  // read the token from the cookie
-        jwt.verify(token, secret, (err, decoded) => {
-            if (err) {
-            console.error('Token verification error:', err);
-            return res.status(401).json({ error: 'Invalid token' });
-            }
-            const ObjectId = require('mongodb').ObjectId;
-            const _id = new ObjectId(decoded._id);
-            db.collection('users')
-            .findOne({ _id })
-            .then((user) => {
-                if (user) {
-                res.json({ user });
-                } else {
-                res.status(401).json({ error: 'User not found' });
-                }
-            })
-            .catch((err) => {
-                console.error('Error retrieving user:', err);
-                res.status(500).json({ error: 'Failed to retrieve user' });
-            });
+        } else {
+            res.status(401).json({ error: 'Invalid login credentials' });
+        }
+        })
+        .catch(err => {
+        console.error('Error logging in:', err);
+        res.status(500).json({ error: 'Failed to login' });
         });
     });
-};
+        
+        
+    /*app.get('/verify', (req, res) => {
+    const token = req.cookies.token;  // read the token from the cookie
+    jwt.verify(token, secret, (err, decoded) => {
+        if (err) {
+        console.error('Token verification error:', err);
+        return res.status(401).json({ error: 'Invalid token' });
+        }
+        const ObjectId = require('mongodb').ObjectId;
+        const _id = new ObjectId(decoded._id);
+        db.collection('users')
+        .findOne({ _id })
+        .then((user) => {
+            if (user) {
+            res.json({ user });
+            } else {
+            res.status(401).json({ error: 'User not found' });
+            }
+        })
+        .catch((err) => {
+            console.error('Error retrieving user:', err);
+            res.status(500).json({ error: 'Failed to retrieve user' });
+        });
+    });
+    });*/
+}; 
