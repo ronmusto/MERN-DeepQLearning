@@ -62,7 +62,7 @@ module.exports = function(app, db) {
     });
         
         
-    /*app.get('/verify', (req, res) => {
+    app.get('/verify', (req, res) => {
     const token = req.cookies.token;  // read the token from the cookie
     jwt.verify(token, secret, (err, decoded) => {
         if (err) {
@@ -85,5 +85,5 @@ module.exports = function(app, db) {
             res.status(500).json({ error: 'Failed to retrieve user' });
         });
     });
-    });*/
+    });
 }; 
