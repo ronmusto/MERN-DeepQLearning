@@ -60,7 +60,17 @@ module.exports = function(app, db) {
     // Update a specific booked vacation by its ID
     app.put('/update-booked-vacation/:bookingID', (req, res) => {
         const bookingID = new ObjectId(req.params.bookingID);
-        const { startDate, endDate } = req.body;
+        const { startDate, endDate, userTimeZone } = req.body; // Include userTimeZone
+    
+        try {
+            // Parse dates from ISO 8601 format (already in UTC from frontend)
+            const newStartDate = new Date(startDate); 
+            const newEndDate = new Date(endDate);
+    
+            // Ensure dates are valid
+            if (isNaN(newStartDate) || isNaN(newEndDate)) {
+                return res.status(400).json({ error: 'Invalid date format' });
+            }
 
         db.collection('User-Bookings')
             .updateOne({ _id: bookingID }, { $set: { startDate, endDate } })
@@ -74,6 +84,9 @@ module.exports = function(app, db) {
                 console.error('Error updating booked vacation:', err);
                 res.status(500).json({ error: 'Failed to update booked vacation' });
             });
+        } catch (err) {
+            console.error('Error parsing or updating booked vacation:', err);
+            res.status(500).json({ error: 'Failed to update booked vacation' });
+        }
     });
-
 };
