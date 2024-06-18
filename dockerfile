@@ -13,11 +13,8 @@ RUN npm install
 # Copy the rest of your application code
 COPY . .
 
-# Build your application
-RUN npm run build 
-
-# Expose the port your application will listen on
+# Expose the port your application will listen on (usually 3000 for MERN)
 EXPOSE 4200
 
-# Define the command to run your application
-CMD [ "npm", "start" ] 
+# Define the command to run your application (directly start the server)
+CMD [ "node", "server.js" ] 

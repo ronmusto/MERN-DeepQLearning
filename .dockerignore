@@ -1,0 +1,4 @@
+.env
+scaler.joblb
+housemodel.joblib
+node_modules
