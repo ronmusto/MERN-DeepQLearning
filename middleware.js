@@ -6,7 +6,7 @@ const { secret } = require('./config');
 
 module.exports = (app, db) => {
     app.use(cors({
-        origin: process.env.HOST,
+        origin: process.env.HOST || process.env.HOSTTWO,
         methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
         credentials: true  // this enables cookies to be sent with requests
     }));
