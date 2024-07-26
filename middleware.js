@@ -5,10 +5,22 @@ const express = require('express');
 const { secret } = require('./config');
 
 module.exports = (app, db) => {
+    //Array of allowed origins (read from environment variables)
+    const allowedOrigins = [process.env.HOST, process.env.HOSTTWO];
+
+    //Custom CORS middleware
     app.use(cors({
-        origin: process.env.HOST || process.env.HOSTTWO,
-        methods: ['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'],
-        credentials: true  // this enables cookies to be sent with requests
+        origin: (origin, callback) => {
+            //Check if origin exists and is allowed
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);  //Allow the request
+            } else {
+                callback(new Error('Not allowed by CORS')); //Reject the request
+            }
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: true //Enable cookies
     }));
 
     app.use(cookieParser());
